@@ -152,8 +152,8 @@ def clean_game_title_for_folder(raw_title: str) -> str:
     title = re.sub(r"\[.*?fitgirl.*?\]", "", title, flags=re.IGNORECASE)
     title = re.sub(r"\(.*?selective.*?\)", "", title, flags=re.IGNORECASE)
 
-    # Split on main repack separator ' - ' before version/dlc details
-    parts = re.split(r"\s+-\s+(?:v\d|build|update|\d+\.\d+|\+|repack|early access)", title, flags=re.IGNORECASE)
+    # Split on main repack separators (comma, dash, slash) before version/build/dlc/ost details
+    parts = re.split(r"[,–—\-\/]\s*(?:v\d|build|update|\d+\.\d+|\+|repack|early access|\d+\s*dlc|\d+\s*ost)", title, flags=re.IGNORECASE)
     if parts:
         title = parts[0]
 
@@ -164,7 +164,7 @@ def clean_game_title_for_folder(raw_title: str) -> str:
     title = re.sub(r'[\\/:*?"<>|]', " - ", title)
     # Condense dashes and spaces
     title = re.sub(r"\s*-\s*-\s*", " - ", title)
-    title = re.sub(r"\s+", " ", title).strip(" .-_")
+    title = re.sub(r"\s+", " ", title).strip(" .-_,")
     return title or "FitGirl_Game"
 
 

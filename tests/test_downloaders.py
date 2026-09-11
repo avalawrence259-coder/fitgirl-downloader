@@ -101,13 +101,13 @@ async def test_downloader_dispatcher_idm(tmp_path):
 async def test_downloader_dispatcher_fdm(tmp_path):
     executed_cmds = []
 
-    def mock_run(cmd, *args, **kwargs):
+    def mock_popen(cmd, *args, **kwargs):
         executed_cmds.append(cmd)
-        return MagicMock(returncode=0)
+        return MagicMock(pid=12345)
 
     test_urls = ["https://mock.cdn/file1.rar"]
 
-    with patch("subprocess.run", side_effect=mock_run):
+    with patch("subprocess.Popen", side_effect=mock_popen):
         with patch.object(
             DownloaderDispatcher,
             "resolve_url_info",
@@ -120,7 +120,7 @@ async def test_downloader_dispatcher_fdm(tmp_path):
             )
             assert success is True
     assert len(executed_cmds) == 1
-    assert executed_cmds[0] == ["fdm.exe", "--url", "https://mock.cdn/file1.rar", "--folder", str(tmp_path.resolve())]
+    assert executed_cmds[0] == ["fdm.exe", "https://mock.cdn/file1.rar"]
 
 
 def test_choose_downloader_engine_preferred():

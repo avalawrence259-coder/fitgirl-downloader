@@ -117,9 +117,13 @@ def select_repack_components(
     for idx, item in enumerate(optional_items, 1):
         opt_table.add_row(str(idx), item["label"], item["filename"], item["type"].replace("_", " ").title())
 
+    from ffdl.cli import resolve_output_directory
+    current_out = resolve_output_directory(game_title=title)
+
     console.print(f"\n[bold green]📦 Repack Archive Structure:[/bold green]")
     console.print(f" • [bold white]Required Main Game Parts:[/bold white] [bold cyan]{len(main_links)} parts[/bold cyan] (Essential to install & run)")
     console.print(f" • [bold white]Optional / Selective Addons:[/bold white] [bold yellow]{len(optional_items)} files[/bold yellow] (Voiceovers, OST, bonus media)")
+    console.print(f" • [bold white]Target Download Folder:[/bold white] [bold cyan]{current_out}[/bold cyan]")
     console.print(opt_table)
 
     has_english = any(item.get("type") == "english_vo" or "english" in item.get("filename", "").lower() for item in optional_items)
@@ -136,17 +140,36 @@ def select_repack_components(
         f"[bold white][2][/bold white] 📦 [bold cyan]Full Complete Package[/bold cyan] — [white]{len(links)} parts[/white] (All main parts + all languages + soundtracks + bonus media)",
         f"[bold white][3][/bold white] 🎯 [bold cyan]Custom Language & Bonus Picker[/bold cyan] (Core game + choose specific voiceovers or OST by number)",
         f"[bold white][4][/bold white] 📋 [bold cyan]Manual Part Range Picker[/bold cyan] (Select specific part numbers or ranges, e.g. 1-10 or 42)",
+        f"[bold white][D][/bold white] 📁 [bold yellow]Change Download Directory / Drive[/bold yellow] (Current: {current_out.name})",
     ])
 
     console.print(Panel("\n".join(menu_lines), title="[bold yellow]CHOOSE DOWNLOAD PACKAGE[/bold yellow]", box=box.ROUNDED))
 
-    valid_choices = ["1", "2", "3", "4"]
+    valid_choices = ["1", "2", "3", "4", "d"]
     if has_english:
         valid_choices.append("e")
 
     mode = Prompt.ask("[bold yellow]Choose an option[/bold yellow]", choices=valid_choices, default="1").lower()
 
-    if mode == "1":
+    if mode == "d":
+        new_dest = Prompt.ask(
+            "\n[bold yellow]Enter new destination directory or drive (e.g. D:\\Games or G:\\FFDL)[/bold yellow]",
+            default=str(current_out.parent)
+        ).strip()
+        if new_dest:
+            from ffdl.persistence.resumer import load_user_config, save_user_config
+            cfg = load_user_config()
+            cfg["output_dir"] = new_dest
+            save_user_config(cfg)
+            console.print(f"[bold green]✔ Destination directory updated to: {new_dest}[/bold green]\n")
+        return select_repack_components(
+            links,
+            title=title,
+            main_only=main_only,
+            all_parts=all_parts,
+            select_optionals=select_optionals,
+        )
+    elif mode == "1":
         console.print(f"[bold green]✔ Selected {len(main_links)} main game parts.[/bold green]")
         return main_links
     elif mode == "e":

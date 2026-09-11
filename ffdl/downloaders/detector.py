@@ -168,7 +168,7 @@ class DownloaderDetector:
         # 1. FFDL Built-in (Always available & Recommended)
         results["ffdl"] = DownloaderInfo(
             id="ffdl",
-            name="⚡ FFDL Built-in Accelerator (Recommended)",
+            name="⚡ FFDL Built-in Accelerator (Recommended) [100% Automated, Zero-Click]",
             executable_path=sys.executable,
             is_available=True,
             description="16-Stream Direct Concurrency with Smart Resumption and Anti-Stall Guard",
@@ -183,18 +183,18 @@ class DownloaderDetector:
             executable_path=idm_exe,
             is_available=bool(idm_exe),
             description="Automated Silent Queue Injection via IDMan.exe (/d /p /f /n /a /s)",
-            cli_flags_supported=["--output", "--auto"],
+            cli_flags_supported=["/d", "/p", "/f", "/n", "/a", "/s"],
         )
 
         # 3. FDM
         fdm_exe = cls.find_fdm_path()
         results["fdm"] = DownloaderInfo(
             id="fdm",
-            name="🌐 Free Download Manager (FDM)",
+            name="🌐 Free Download Manager (FDM) [GUI Mode]",
             executable_path=fdm_exe,
             is_available=bool(fdm_exe),
-            description="Multi-part External Torrent and Direct Accelerator",
-            cli_flags_supported=["--output"],
+            description="Dispatches direct links to Free Download Manager",
+            cli_flags_supported=[],
         )
 
         # 4. Aria2

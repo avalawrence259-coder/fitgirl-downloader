@@ -121,16 +121,18 @@ class DownloaderDispatcher:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         console.print(f"\n[bold cyan]🌐 Dispatching {len(urls)} file(s) to Free Download Manager...[/bold cyan]")
+        console.print(f" • [dim]Target Folder: {output_dir}[/dim]")
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         for idx, url in enumerate(urls, 1):
             info = await cls.resolve_url_info(url)
-            cmd = [fdm_exe, "--url", info["direct_url"], "--folder", str(output_dir)]
+            cmd = [fdm_exe, info["direct_url"]]
             try:
-                subprocess.run(cmd, check=False, timeout=10, creationflags=flags)
-                console.print(f" • [{idx}/{len(urls)}] Queued: {info['filename']}")
+                subprocess.Popen(cmd, creationflags=flags)
+                console.print(f" • [{idx}/{len(urls)}] ✔ Sent to FDM: {info['filename']}")
             except Exception as e:
-                console.print(f" • [{idx}/{len(urls)}] [red]Failed to queue {info['filename']}: {e}[/red]")
-        console.print("\n[bold green]✔ All items dispatched to FDM![/bold green]\n")
+                console.print(f" • [{idx}/{len(urls)}] [red]Failed to send {info['filename']}: {e}[/red]")
+        console.print("\n[bold green]✔ All items dispatched to Free Download Manager![/bold green]")
+        console.print("[dim]💡 Tip: In FDM, click 'Download' to start downloading. Or use Engine [1] (FFDL Built-in) for 100% automated, zero-click background downloading.[/dim]\n")
         return True
 
     @classmethod

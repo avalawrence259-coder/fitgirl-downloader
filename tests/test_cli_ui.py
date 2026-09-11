@@ -133,6 +133,7 @@ def test_clean_game_title_for_folder():
     assert clean_game_title_for_folder("Mortal Kombat 1: Premium Edition – v0.154/v1.0.0 + 4 DLCs [FitGirl Repack]") == "Mortal Kombat 1 - Premium Edition"
     assert clean_game_title_for_folder("Grand Theft Auto V / GTA 5 (v1.0.3095 + DLC + MULTi13) [FitGirl Repack, Selective Download]") == "Grand Theft Auto V - GTA 5"
     assert clean_game_title_for_folder("Prince of Persia: The Lost Crown – Complete Edition – v1.0.4 + DLC [FitGirl Repack]") == "Prince of Persia - The Lost Crown - Complete Edition"
+    assert clean_game_title_for_folder("Prince of Persia: The Lost Crown – Complete Edition, v1.4.3 + 5 DLCs + 2 OSTs") == "Prince of Persia - The Lost Crown - Complete Edition"
     assert clean_game_title_for_folder("ELDEN RING: Shadow of the Erdtree Edition – v1.12.3 + 3 DLCs") == "ELDEN RING - Shadow of the Erdtree Edition"
     assert clean_game_title_for_folder("") == "FitGirl_Game"
 
@@ -147,7 +148,7 @@ def test_resolve_output_directory_hierarchy(tmp_path):
     assert out.parent == tmp_path
 
 
-def test_select_repack_components_choices():
+def test_select_repack_components_choices(tmp_path):
     from ffdl.interactive import select_repack_components
     from unittest.mock import patch
 
@@ -186,5 +187,11 @@ def test_select_repack_components_choices():
     with patch("rich.prompt.Prompt.ask", side_effect=["4", "1, 3"]):
         res4 = select_repack_components(links, title="Test Game")
         assert len(res4) == 2
+
+    # Choice D: Change download directory and then pick 1
+    new_dir = str(tmp_path / "CustomGames")
+    with patch("rich.prompt.Prompt.ask", side_effect=["d", new_dir, "1"]):
+        res_d = select_repack_components(links, title="Test Game")
+        assert len(res_d) == 2
 
 
