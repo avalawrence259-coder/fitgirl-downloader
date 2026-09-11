@@ -74,13 +74,55 @@ class DownloaderDetector:
 
         local_app_data = os.environ.get("LOCALAPPDATA", "")
         candidates = [
-            os.path.join(local_app_data, r"Softdeluxe\Free Download Managerdm.exe"),
-            r"C:\Program Files\Free Download Managerdm.exe",
-            r"C:\Program Files (x86)\Free Download Managerdm.exe",
+            r"C:\Program Files\Softdeluxe\Free Download Manager\fdm.exe",
+            r"C:\Program Files (x86)\Softdeluxe\Free Download Manager\fdm.exe",
+            r"C:\Program Files\FreeDownloadManager.ORG\Free Download Manager\fdm.exe",
+            r"C:\Program Files (x86)\FreeDownloadManager.ORG\Free Download Manager\fdm.exe",
+            r"C:\Program Files\Free Download Manager\fdm.exe",
+            r"C:\Program Files (x86)\Free Download Manager\fdm.exe",
+            os.path.join(local_app_data, "Softdeluxe", "Free Download Manager", "fdm.exe"),
+            os.path.join(local_app_data, "Programs", "Free Download Manager", "fdm.exe"),
         ]
         for c in candidates:
             if c and os.path.isfile(c):
                 return c
+
+        if sys.platform == "win32":
+            try:
+                import winreg
+                for root in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
+                    for sub in [
+                        r"Software\Microsoft\Windows\CurrentVersion\Uninstall",
+                        r"Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                    ]:
+                        try:
+                            k = winreg.OpenKey(root, sub)
+                            for i in range(winreg.QueryInfoKey(k)[0]):
+                                sk_name = winreg.EnumKey(k, i)
+                                sk = winreg.OpenKey(k, sk_name)
+                                try:
+                                    dname = str(winreg.QueryValueEx(sk, "DisplayName")[0])
+                                    if "free download manager" in dname.lower():
+                                        # Try DisplayIcon or InstallLocation
+                                        try:
+                                            icon = str(winreg.QueryValueEx(sk, "DisplayIcon")[0]).strip('"')
+                                            if os.path.isfile(icon) and icon.lower().endswith("fdm.exe"):
+                                                return icon
+                                        except Exception:
+                                            pass
+                                        try:
+                                            loc = str(winreg.QueryValueEx(sk, "InstallLocation")[0]).strip('"')
+                                            exe = os.path.join(loc, "fdm.exe")
+                                            if os.path.isfile(exe):
+                                                return exe
+                                        except Exception:
+                                            pass
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+            except Exception:
+                pass
 
         return None
 
@@ -91,8 +133,8 @@ class DownloaderDetector:
             return found
 
         candidates = [
-            r"C:	oolsria2ria2c.exe",
-            r"C:\ProgramData\chocolateyinria2c.exe",
+            r"C:\tools\aria2\aria2c.exe",
+            r"C:\ProgramData\chocolatey\bin\aria2c.exe",
         ]
         for c in candidates:
             if os.path.isfile(c):
@@ -108,8 +150,9 @@ class DownloaderDetector:
 
         local_app_data = os.environ.get("LOCALAPPDATA", "")
         candidates = [
-            os.path.join(local_app_data, r"JDownloader 2.0\JDownloader2.exe"),
+            os.path.join(local_app_data, "JDownloader 2.0", "JDownloader2.exe"),
             r"C:\Program Files\JDownloader 2.0\JDownloader2.exe",
+            r"C:\Program Files (x86)\JDownloader 2.0\JDownloader2.exe",
         ]
         for c in candidates:
             if c and os.path.isfile(c):

@@ -126,3 +126,65 @@ def test_natural_file_sorting_in_partition():
     assert main_links == expected_order
     assert len(opt_links) == 1
 
+
+def test_clean_game_title_for_folder():
+    from ffdl.persistence.resumer import clean_game_title_for_folder
+
+    assert clean_game_title_for_folder("Mortal Kombat 1: Premium Edition – v0.154/v1.0.0 + 4 DLCs [FitGirl Repack]") == "Mortal Kombat 1 - Premium Edition"
+    assert clean_game_title_for_folder("Grand Theft Auto V / GTA 5 (v1.0.3095 + DLC + MULTi13) [FitGirl Repack, Selective Download]") == "Grand Theft Auto V - GTA 5"
+    assert clean_game_title_for_folder("Prince of Persia: The Lost Crown – Complete Edition – v1.0.4 + DLC [FitGirl Repack]") == "Prince of Persia - The Lost Crown - Complete Edition"
+    assert clean_game_title_for_folder("ELDEN RING: Shadow of the Erdtree Edition – v1.12.3 + 3 DLCs") == "ELDEN RING - Shadow of the Erdtree Edition"
+    assert clean_game_title_for_folder("") == "FitGirl_Game"
+
+
+def test_resolve_output_directory_hierarchy(tmp_path):
+    from ffdl.cli import resolve_output_directory
+
+    # Custom base path with game title
+    out = resolve_output_directory(output_dir=str(tmp_path), game_title="Mortal Kombat 1: Premium Edition")
+    assert out.exists()
+    assert out.name == "Mortal Kombat 1 - Premium Edition"
+    assert out.parent == tmp_path
+
+
+def test_select_repack_components_choices():
+    from ffdl.interactive import select_repack_components
+    from unittest.mock import patch
+
+    links = [
+        "https://datanodes.to/part1#Game.part01.rar",
+        "https://datanodes.to/part2#Game.part02.rar",
+        "https://datanodes.to/opt1#fg-optional-selective-english.bin",
+        "https://datanodes.to/opt2#fg-optional-soundtrack.bin",
+    ]
+
+    # Choice 1: Main parts only
+    with patch("rich.prompt.Prompt.ask", return_value="1"):
+        res1 = select_repack_components(links, title="Test Game")
+        assert len(res1) == 2
+        assert "Game.part01.rar" in res1[0]
+        assert "Game.part02.rar" in res1[1]
+
+    # Choice E: Main parts + English VO
+    with patch("rich.prompt.Prompt.ask", return_value="e"):
+        res_e = select_repack_components(links, title="Test Game")
+        assert len(res_e) == 3
+        assert any("english" in u for u in res_e)
+
+    # Choice 2: Complete Package (All parts)
+    with patch("rich.prompt.Prompt.ask", return_value="2"):
+        res2 = select_repack_components(links, title="Test Game")
+        assert len(res2) == 4
+
+    # Choice 3: Custom Addons (Pick soundtrack #2)
+    with patch("rich.prompt.Prompt.ask", side_effect=["3", "2"]):
+        res3 = select_repack_components(links, title="Test Game")
+        assert len(res3) == 3
+        assert any("soundtrack" in u for u in res3)
+
+    # Choice 4: Manual Part Range Picker (Pick parts 1 and 3)
+    with patch("rich.prompt.Prompt.ask", side_effect=["4", "1, 3"]):
+        res4 = select_repack_components(links, title="Test Game")
+        assert len(res4) == 2
+
+

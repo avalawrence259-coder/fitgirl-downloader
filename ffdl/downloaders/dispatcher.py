@@ -121,11 +121,12 @@ class DownloaderDispatcher:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         console.print(f"\n[bold cyan]🌐 Dispatching {len(urls)} file(s) to Free Download Manager...[/bold cyan]")
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         for idx, url in enumerate(urls, 1):
             info = await cls.resolve_url_info(url)
             cmd = [fdm_exe, "--url", info["direct_url"], "--folder", str(output_dir)]
             try:
-                subprocess.run(cmd, check=False, timeout=10)
+                subprocess.run(cmd, check=False, timeout=10, creationflags=flags)
                 console.print(f" • [{idx}/{len(urls)}] Queued: {info['filename']}")
             except Exception as e:
                 console.print(f" • [{idx}/{len(urls)}] [red]Failed to queue {info['filename']}: {e}[/red]")

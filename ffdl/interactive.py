@@ -124,15 +124,18 @@ def select_repack_components(
 
     has_english = any(item.get("type") == "english_vo" or "english" in item.get("filename", "").lower() for item in optional_items)
 
+    eng_count = len([item for item in optional_items if item.get("type") == "english_vo" or "english" in item.get("filename", "").lower()])
     menu_lines = [
-        f"[bold white][1][/bold white] ⚡ [bold cyan]Auto-Download All Main Game Parts[/bold cyan] ({len(main_links)} parts — Automated sequential download, skips optional addons)",
+        f"[bold white][1][/bold white] ⚡ [bold cyan]Main Game Only[/bold cyan] [green](Recommended)[/green] — [white]{len(main_links)} parts[/white] (Essential files to play; skips extra languages & bonus files)",
     ]
     if has_english:
-        menu_lines.append(f"[bold white][E][/bold white] 🌟 [bold cyan]Auto-Download Main Parts + English Voiceover[/bold cyan]")
+        menu_lines.append(
+            f"[bold white][E][/bold white] 🌟 [bold cyan]Main Game + English Voiceover[/bold cyan] — [white]{len(main_links) + eng_count} parts[/white] (Core game files + English speech pack)"
+        )
     menu_lines.extend([
-        f"[bold white][2][/bold white] 📦 [bold cyan]Auto-Download Complete Package[/bold cyan] ({len(links)} parts — All main parts + all optional addons automated)",
-        f"[bold white][3][/bold white] 🎯 [bold cyan]Custom Selection[/bold cyan] (Pick specific optional addons by number)",
-        f"[bold white][4][/bold white] 📋 [bold cyan]Manual Part-by-Part Range Picker[/bold cyan] (Select individual archives manually)",
+        f"[bold white][2][/bold white] 📦 [bold cyan]Full Complete Package[/bold cyan] — [white]{len(links)} parts[/white] (All main parts + all languages + soundtracks + bonus media)",
+        f"[bold white][3][/bold white] 🎯 [bold cyan]Custom Language & Bonus Picker[/bold cyan] (Core game + choose specific voiceovers or OST by number)",
+        f"[bold white][4][/bold white] 📋 [bold cyan]Manual Part Range Picker[/bold cyan] (Select specific part numbers or ranges, e.g. 1-10 or 42)",
     ])
 
     console.print(Panel("\n".join(menu_lines), title="[bold yellow]CHOOSE DOWNLOAD PACKAGE[/bold yellow]", box=box.ROUNDED))
@@ -147,7 +150,7 @@ def select_repack_components(
         console.print(f"[bold green]✔ Selected {len(main_links)} main game parts.[/bold green]")
         return main_links
     elif mode == "e":
-        eng_urls = [item["url"] for item in optional_items if item["type"] == "english_vo"]
+        eng_urls = [item["url"] for item in optional_items if item["type"] == "english_vo" or "english" in item.get("filename", "").lower()]
         chosen = main_links + eng_urls
         console.print(f"[bold green]✔ Selected {len(main_links)} main parts + English VO ({len(chosen)} parts total).[/bold green]")
         return chosen
@@ -429,6 +432,8 @@ def choose_downloader_engine(
 
 def run_interactive_wizard(download_fn: Callable):
     """Main interactive menu loop with full feature set."""
+    from ffdl.cli import resolve_output_directory
+
     display_banner()
     menu_text = (
         "[bold white][1][/bold white] 🎮 [bold cyan]Enter FitGirl Game Post URL[/bold cyan] (Auto-extracts all mirrors & parts)\n"
@@ -436,13 +441,50 @@ def run_interactive_wizard(download_fn: Callable):
         "[bold white][3][/bold white] 📁 [bold cyan]Load Links from Local File (.txt, .html, .md)[/bold cyan]\n"
         "[bold white][4][/bold white] 🔥 [bold bright_red]Scrape Web Page with Firecrawl AI[/bold bright_red]\n"
         "[bold white][5][/bold white] ⚡ [bold bright_green]Run Internet Speed Test & Calibrate Concurrency[/bold bright_green]\n"
+        "[bold white][6][/bold white] ⚙️  [bold yellow]Storage & Drive Manager[/bold yellow] (View disk space & set default folder)\n"
         "[bold white][0][/bold white] 🚪 [bold red]Exit[/bold red]"
     )
     console.print(Panel(menu_text, title="[bold green]MAIN MENU[/bold green]", box=box.ROUNDED))
-    choice = Prompt.ask("[bold yellow]Choose an option[/bold yellow]", choices=["1", "2", "3", "4", "5", "0"], default="1")
+    choice = Prompt.ask("[bold yellow]Choose an option[/bold yellow]", choices=["1", "2", "3", "4", "5", "6", "0"], default="1")
 
     if choice == "0":
         sys.exit(0)
+    elif choice == "6":
+        from ffdl.persistence.resumer import load_user_config, save_user_config
+        import os, shutil
+        cfg = load_user_config()
+        current_out = cfg.get("output_dir", str(Path.home() / "Downloads" / "FFDL"))
+
+        drive_table = Table(title="💻 DETECTED STORAGE DRIVES & SPACE", box=box.ROUNDED)
+        drive_table.add_column("Drive", style="bold cyan", width=8)
+        drive_table.add_column("Free Space", style="bold green", width=16)
+        drive_table.add_column("Total Capacity", style="white", width=16)
+        drive_table.add_column("Status / Recommendation", style="yellow")
+
+        drives = os.listdrives() if hasattr(os, "listdrives") else ["C:\\"]
+        for d in drives:
+            try:
+                u = shutil.disk_usage(d)
+                free_gb = u.free / (1024**3)
+                total_gb = u.total / (1024**3)
+                rec = "Ready for games" if free_gb > 50 else ("Low Space" if free_gb < 15 else "Adequate")
+                drive_table.add_row(d, f"{free_gb:.1f} GB Free", f"{total_gb:.1f} GB Total", rec)
+            except Exception:
+                pass
+
+        console.print(drive_table)
+        console.print(f"\n📂 [bold white]Current Base Download Path:[/bold white] [bold cyan]{current_out}[/bold cyan]")
+        console.print("[dim]Every downloaded game automatically creates its own clean subfolder inside this path.[/dim]\n")
+
+        new_path = Prompt.ask("[bold yellow]Enter new default base directory (or press Enter to keep)[/bold yellow]", default=current_out).strip()
+        if new_path and new_path != current_out:
+            p = Path(new_path).expanduser()
+            p.mkdir(parents=True, exist_ok=True)
+            cfg["output_dir"] = str(p)
+            save_user_config(cfg)
+            console.print(f"[bold green]✔ Saved new default download directory: {p}[/bold green]\n")
+        Prompt.ask("Press Enter to return...")
+        return
     elif choice == "5":
         asyncio.run(execute_speedtest())
         Prompt.ask("\nPress Enter to return...")
@@ -456,7 +498,10 @@ def run_interactive_wizard(download_fn: Callable):
             chosen_links = interactive_choose_mirror(result["data"])
             if not chosen_links:
                 return
-            out_dir = Path(Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default="./downloads"))
+            g_title = result["data"].get("title", "")
+            default_out = resolve_output_directory(game_title=g_title)
+            user_dir = Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default=str(default_out))
+            out_dir = Path(user_dir).expanduser()
             out_dir.mkdir(parents=True, exist_ok=True)
             for idx, link in enumerate(chosen_links, 1):
                 download_fn(link, out_dir, idx, len(chosen_links))
@@ -464,7 +509,9 @@ def run_interactive_wizard(download_fn: Callable):
         url = Prompt.ask("\n[bold cyan]Enter URL, Magnet, or Pastebin Link[/bold cyan]").strip()
         if not url:
             return
-        out_dir = Path(Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default="./downloads"))
+        default_out = resolve_output_directory()
+        user_dir = Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default=str(default_out))
+        out_dir = Path(user_dir).expanduser()
         out_dir.mkdir(parents=True, exist_ok=True)
         download_fn(url, out_dir, 1, 1)
     elif choice == "3":
@@ -478,7 +525,9 @@ def run_interactive_wizard(download_fn: Callable):
         if not urls:
             console.print("[bold red]❌ No valid URLs extracted from file.[/bold red]")
             return
-        out_dir = Path(Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default="./downloads"))
+        default_out = resolve_output_directory()
+        user_dir = Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default=str(default_out))
+        out_dir = Path(user_dir).expanduser()
         out_dir.mkdir(parents=True, exist_ok=True)
         for idx, u in enumerate(urls, 1):
             download_fn(u, out_dir, idx, len(urls))
@@ -499,7 +548,9 @@ def run_interactive_wizard(download_fn: Callable):
             console.print("[bold red]❌ No direct download mirrors found on this page.[/bold red]")
             return
         console.print(f"[bold green]✔ Discovered {len(scraped_urls)} link(s)![/bold green]")
-        out_dir = Path(Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default="./downloads"))
+        default_out = resolve_output_directory()
+        user_dir = Prompt.ask("[bold cyan]Destination Directory[/bold cyan]", default=str(default_out))
+        out_dir = Path(user_dir).expanduser()
         out_dir.mkdir(parents=True, exist_ok=True)
         for idx, u in enumerate(scraped_urls, 1):
             download_fn(u, out_dir, idx, len(scraped_urls))

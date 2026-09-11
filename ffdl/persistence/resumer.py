@@ -136,9 +136,43 @@ def save_user_config(config_data: Dict[str, Any]):
         pass
 
 
+def clean_game_title_for_folder(raw_title: str) -> str:
+    """
+    Sanitizes raw FitGirl game post titles into clean, filesystem-safe folder names.
+    E.g.: 'Mortal Kombat 1: Premium Edition – v0.154/v1.0.0 + 4 DLCs [FitGirl Repack]'
+    --> 'Mortal Kombat 1 - Premium Edition'
+    """
+    if not raw_title:
+        return "FitGirl_Game"
+
+    import re
+    title = raw_title.strip()
+    title = title.replace("\u2013", "-").replace("\u2014", "-").replace("’", "'").replace("‘", "'")
+    # Strip FitGirl Repack branding tags [FitGirl Repack...], (Selective Download...)
+    title = re.sub(r"\[.*?fitgirl.*?\]", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\(.*?selective.*?\)", "", title, flags=re.IGNORECASE)
+
+    # Split on main repack separator ' - ' before version/dlc details
+    parts = re.split(r"\s+-\s+(?:v\d|build|update|\d+\.\d+|\+|repack|early access)", title, flags=re.IGNORECASE)
+    if parts:
+        title = parts[0]
+
+    # Remove trailing parenthesis containing version or dlc info: (v1.0 + DLCs)
+    title = re.sub(r"\s*\((?:v\d|build|update|\d+\.\d+|\+).*?\)", "", title, flags=re.IGNORECASE)
+
+    # Replace illegal filesystem characters: \ / : * ? " < > |
+    title = re.sub(r'[\\/:*?"<>|]', " - ", title)
+    # Condense dashes and spaces
+    title = re.sub(r"\s*-\s*-\s*", " - ", title)
+    title = re.sub(r"\s+", " ", title).strip(" .-_")
+    return title or "FitGirl_Game"
+
+
 __all__ = [
     "DownloadResumer",
     "get_config_path",
     "load_user_config",
     "save_user_config",
+    "clean_game_title_for_folder",
 ]
+

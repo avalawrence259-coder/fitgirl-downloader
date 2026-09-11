@@ -52,34 +52,49 @@ if sys.platform == "win32":
 console = Console()
 
 
-def resolve_output_directory(output_dir: Optional[str] = None) -> Path:
+def resolve_output_directory(output_dir: Optional[str] = None, game_title: Optional[str] = None) -> Path:
     """
     Safely resolves the download destination directory.
+    Guarantees dedicated game folder structure:
+        <Base_Dir>/FFDL/<Cleaned_Game_Title>/
     Guarantees write permissions: if output_dir is default/relative and cwd
-    is system32 or non-writable, automatically routes to ~/Downloads.
+    is system32 or non-writable, automatically routes to ~/Downloads/FFDL.
     """
-    from ffdl.persistence.resumer import load_user_config
+    from ffdl.persistence.resumer import load_user_config, clean_game_title_for_folder
     cfg = load_user_config()
     cfg_out = cfg.get("output_dir")
 
-    candidate: Path
-    if output_dir and output_dir != "./downloads":
-        candidate = Path(output_dir).expanduser()
+    base_dir: Path
+    custom_specified = False
+    if output_dir and output_dir not in ("./downloads", "downloads"):
+        base_dir = Path(output_dir).expanduser()
+        custom_specified = True
     elif cfg_out:
-        candidate = Path(cfg_out).expanduser()
+        base_dir = Path(cfg_out).expanduser()
     else:
-        candidate = Path.home() / "Downloads"
+        base_dir = Path.home() / "Downloads" / "FFDL"
 
     # Block dangerous system paths
-    cand_resolved = str(candidate.resolve()).lower()
+    cand_resolved = str(base_dir.resolve()).lower()
     if any(p in cand_resolved for p in ("system32", "syswow64", "windows\\system")):
-        candidate = Path.home() / "Downloads"
+        base_dir = Path.home() / "Downloads" / "FFDL"
+
+    candidate = base_dir
+    # Ensure FFDL top-level folder exists if default or standard path
+    if not custom_specified and candidate.name.lower() != "ffdl":
+        candidate = candidate / "FFDL"
+
+    if game_title:
+        clean_title = clean_game_title_for_folder(game_title)
+        candidate = candidate / clean_title
 
     try:
         candidate.mkdir(parents=True, exist_ok=True)
         return candidate
     except (PermissionError, OSError):
-        fallback = Path.home() / "Downloads"
+        fallback = Path.home() / "Downloads" / "FFDL"
+        if game_title:
+            fallback = fallback / clean_game_title_for_folder(game_title)
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
 
@@ -383,6 +398,8 @@ def main(
             console.print(f"\n[bold green]📥 Received job from Browser Extension:[/bold green] [bold white]{target_u}[/bold white] [cyan][{pref_h}][/cyan]")
             resolved = asyncio.run(URLDispatcher.resolve_target(target_u, preferred_hoster=pref_h))
             if resolved.get("type") == "fitgirl_page":
+                g_title = resolved["data"].get("title", "")
+                target_out = resolve_output_directory(output_dir, game_title=g_title)
                 to_dl = interactive_choose_mirror(
                     resolved["data"],
                     main_only=m_only,
@@ -390,9 +407,10 @@ def main(
                     preferred_hoster=pref_h,
                 )
                 for idx, u in enumerate(to_dl, 1):
-                    sync_download_wrapper(u, out_path, idx=idx, total=len(to_dl), concurrency=concurrency, chunk_kb=chunk_kb)
+                    sync_download_wrapper(u, target_out, idx=idx, total=len(to_dl), concurrency=concurrency, chunk_kb=chunk_kb)
             else:
-                sync_download_wrapper(target_u, out_path, 1, 1, concurrency=concurrency, chunk_kb=chunk_kb)
+                target_out = resolve_output_directory(output_dir)
+                sync_download_wrapper(target_u, target_out, 1, 1, concurrency=concurrency, chunk_kb=chunk_kb)
             return {"status": "dispatched"}
 
         srv = BridgeServer(port=41194, callback=bridge_job_callback)
@@ -425,7 +443,6 @@ def main(
     if run_daemon:
         from ffdl.daemon import run_daemon_server
         display_banner()
-        out_path = resolve_output_directory(output_dir)
 
         def daemon_job_callback(job_data):
             target_u = job_data.get("url", "")
@@ -435,6 +452,8 @@ def main(
             console.print(f"\n[bold green]📥 Received job from Browser Extension:[/bold green] [bold white]{target_u}[/bold white] [cyan][{pref_h}][/cyan]")
             resolved = asyncio.run(URLDispatcher.resolve_target(target_u, preferred_hoster=pref_h))
             if resolved.get("type") == "fitgirl_page":
+                g_title = resolved["data"].get("title", "")
+                target_out = resolve_output_directory(output_dir, game_title=g_title)
                 to_dl = interactive_choose_mirror(
                     resolved["data"],
                     main_only=m_only,
@@ -442,9 +461,10 @@ def main(
                     preferred_hoster=pref_h,
                 )
                 for idx, u in enumerate(to_dl, 1):
-                    sync_download_wrapper(u, out_path, idx=idx, total=len(to_dl), concurrency=concurrency, chunk_kb=chunk_kb)
+                    sync_download_wrapper(u, target_out, idx=idx, total=len(to_dl), concurrency=concurrency, chunk_kb=chunk_kb)
             else:
-                sync_download_wrapper(target_u, out_path, 1, 1, concurrency=concurrency, chunk_kb=chunk_kb)
+                target_out = resolve_output_directory(output_dir)
+                sync_download_wrapper(target_u, target_out, 1, 1, concurrency=concurrency, chunk_kb=chunk_kb)
 
         run_daemon_server(callback=daemon_job_callback)
         return
@@ -496,9 +516,8 @@ def main(
     if not links_only:
         display_banner()
 
-    out_path = resolve_output_directory(output_dir)
-
     urls_to_download: List[str] = []
+    discovered_game_title: Optional[str] = None
 
     for t in targets:
         if scrape:
@@ -511,6 +530,7 @@ def main(
             # Game post page
             resolved = asyncio.run(URLDispatcher.resolve_target(t, preferred_hoster=hoster))
             if resolved.get("type") == "fitgirl_page":
+                discovered_game_title = resolved["data"].get("title", "")
                 chosen = interactive_choose_mirror(
                     resolved["data"],
                     main_only=main_only,
@@ -535,8 +555,11 @@ def main(
         console.print("[bold red]❌ No targets provided. Run 'ffdl -i' for interactive wizard.[/bold red]")
         sys.exit(1)
 
+    out_path = resolve_output_directory(output_dir, game_title=discovered_game_title)
+
     if not links_only:
         console.print(f"\n[bold green]🚀 Queueing {len(urls_to_download)} Item(s) for Processing...[/bold green]")
+        console.print(f"📁 [bold cyan]Download Folder:[/bold cyan] [bold white]{out_path}[/bold white]\n")
 
     # Downloader Selection & Dispatch
     selected_downloader = "ffdl"
@@ -575,6 +598,13 @@ def main(
         fdm_exe = DownloaderDetector.find_fdm_path()
         if fdm_exe:
             asyncio.run(DownloaderDispatcher.dispatch_to_fdm(fdm_exe, urls_to_download, out_path))
+            if is_protocol_invocation:
+                console.print("\n[bold green]✔ All download tasks queued in Free Download Manager![/bold green]")
+                console.print("[dim]Window will remain open. Press Enter to close this window...[/dim]\n")
+                try:
+                    input()
+                except (KeyboardInterrupt, EOFError):
+                    pass
             return
         else:
             console.print("[bold red]❌ FDM not found on your system! Falling back to FFDL.[/bold red]")
