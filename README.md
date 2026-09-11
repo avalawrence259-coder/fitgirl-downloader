@@ -119,24 +119,64 @@ You can also bypass the menu by passing `--idm`, `--fdm`, `--aria2`, or `--downl
 
 ---
 
-## 🗂️ Selective Component Filtering
+## 🗂️ Selective Component Filtering & Package Picker
 
 FitGirl repacks often include dozens of gigabytes of optional language voiceovers (`fg-selective-french.bin`, `fg-selective-brazilian.bin`) and bonus media. The CLI automatically separates essential archives from optional addons:
 
 ```text
-╭──────────────────────── CHOOSE DOWNLOAD PACKAGE ─────────────────────────╮
-│ [1] ⚡ Auto-Download All Main Game Parts (Automated sequential download) │
-│ [E] 🌟 Auto-Download Main Parts + English Voiceover                      │
-│ [2] 📦 Auto-Download Complete Package (All main parts + all optionals)   │
-│ [3] 🎯 Custom Selection (Pick specific optionals by number or keyword)   │
-│ [4] 📋 Manual Part-by-Part Range Picker (e.g. 1-9 or 1-5, 8)             │
-╰──────────────────────────────────────────────────────────────────────────╯
-Choose an option [1/2/3/4/E] (1):
+╭────────────────────────── CHOOSE DOWNLOAD PACKAGE ───────────────────────────╮
+│ [1] ⚡ Main Game Only (Recommended) — 165 parts                             │
+│     (Essential files to play; automatically skips unused languages & extras) │
+│ [E] 🌟 Main Game + English Voiceover — 166 parts                             │
+│     (Core game files + English speech pack)                                  │
+│ [2] 📦 Full Complete Package — 167 parts                                     │
+│     (All main parts + all languages + soundtracks + bonus media)             │
+│ [3] 🎯 Custom Language & Bonus Picker                                        │
+│     (Core game + choose specific voiceovers or OST by number)                │
+│ [4] 📋 Manual Part Range Picker                                              │
+│     (Select specific part numbers or ranges, e.g. 1-10 or 42)                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Choose an option [1/E/2/3/4] (1):
 ```
 
-- Pass `--main-only` to automatically download core game parts and skip all optionals.
-- Pass `--all` to download everything.
-- Pass `--select "french,ost"` to script custom component downloads.
+- **[1] Main Game Only:** Core required archives only. Saves maximum bandwidth and disk space while ensuring a 100% playable installation.
+- **[E] Main Game + English VO:** Automatically appears whenever English audio is in an optional package.
+- **[2] Full Complete Package:** Downloads every single file (core game + all language packs + soundtracks).
+- **[3] Custom Picker:** Core game + choose specific voiceover languages (e.g. Japanese anime voiceovers) by index number.
+- **[4] Manual Range Picker:** Select exact parts or ranges (e.g. `1-10`, `1-5, 8`, or `42`) to download or resume specific missing archives.
+- **CLI Flags:** Pass `--main-only` to skip prompts, `--all` to download all parts, or `--select "french,ost"` for headless scripting.
+
+---
+
+## 📁 Dedicated Game Folder Hierarchy & Drive Manager
+
+FFDL never litters loose archives across your root Downloads directory!
+
+### Automatic Game Subfolders:
+Every download automatically sanitizes the repack post title and organizes all parts into a dedicated subfolder:
+```text
+C:\Users\<Username>\Downloads\FFDL\<Cleaned_Game_Title>\
+```
+*Example:* `Downloads\FFDL\Mortal Kombat 1 - Premium Edition\`  
+Once all parts are downloaded, you can simply open the game folder, right-click `part01.rar`, extract, and install without digging through other files!
+
+### 💻 Storage & Drive Manager (Interactive Menu Option `[6]`):
+FFDL scans all storage drives (`C:\`, `D:\`, `G:\`), displays live free gigabytes vs. total capacity, and lets you set or change your default game repository drive with a single keystroke.
+
+### Custom Destination Options:
+- **One-time download flag:**
+  ```powershell
+  ffdl <url> -o "D:\Games"
+  ```
+- **Permanent default setting:**
+  Edit your configuration file at `~/.ffdl_config.json`:
+  ```json
+  {
+    "output_dir": "D:\\Games\\FFDL",
+    "concurrency": 16,
+    "chunk_kb": 256
+  }
+  ```
 
 ---
 
@@ -163,30 +203,6 @@ Supported cloud providers (all offer free tiers):
 
 ---
 
-## 📁 Download Locations & Configuration
-
-By default, files are saved to your standard user Downloads directory:
-```text
-C:\Users\<Username>\Downloads
-```
-
-### Changing the Destination:
-- **One-time download flag:**
-  ```powershell
-  ffdl <url> -o "D:\Games"
-  ```
-- **Permanent default setting:**
-  Edit your configuration file at `~/.ffdl_config.json`:
-  ```json
-  {
-    "output_dir": "D:\\Games",
-    "concurrency": 16,
-    "chunk_kb": 256
-  }
-  ```
-
----
-
 ## 🛠️ CLI Options Reference
 
 ```text
@@ -196,7 +212,7 @@ Options:
   -i, --interactive            Launch interactive CLI wizard dashboard
   -f, --file PATH              File containing URLs or raw HTML snippet
   -p, --paste TEXT             Raw HTML snippet or pasted text containing links
-  -o, --output TEXT            Destination directory for downloads (default: ~/Downloads)
+  -o, --output TEXT            Destination directory for downloads (default: ~/Downloads/FFDL)
   -c, --concurrency INTEGER    Number of parallel worker streams (default: 16)
   --chunk-kb INTEGER           Buffer chunk size in KB (default: 256)
   -w, --overwrite              Force re-download and overwrite existing files
@@ -224,8 +240,8 @@ The project includes a full unit, integration, and simulation test suite:
 ```bash
 pytest tests/ -v
 ```
-- **51 / 51 tests passing (100% coverage)**
-- Native messaging IPC framing, bearer authentication, multi-release isolation, downloader detection, and segment resumption verification.
+- **54 / 54 tests passing (100% coverage)**
+- Native messaging IPC framing, bearer authentication, multi-release isolation, downloader detection (IDM & FDM), dedicated game directory sanitization, and segment resumption verification.
 
 ---
 
