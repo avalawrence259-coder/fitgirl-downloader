@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ffdl-cli"
+version = "1.0.0"
+description = "⚡ Ultra-Fast Parallel Multi-Part Downloader with Automated Cloudflare Turnstile Resolution, Smart Memory & Anti-Stall Engine."
+readme = "README.md"
+authors = [
+    { name = "FFDL Team", email = "developer@warpfast.dev" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = [
+    "downloader", "fuckingfast", "accelerator", "multi-part",
+    "parallel-download", "cloudflare-turnstile", "privatebin", "fitgirl"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities"
+]
+
+dependencies = [
+    "rich>=13.0.0",
+    "click>=8.0.0",
+    "httpx>=0.25.0",
+    "aiohttp>=3.9.0",
+    "playwright>=1.40.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/avalawrence259-coder/fitgirl-downloader"
+"Bug Tracker" = "https://github.com/avalawrence259-coder/fitgirl-downloader/issues"
+
+[project.scripts]
+ffdl = "ffdl.cli:main"
+ffdl-cli = "ffdl.cli:main"

@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "FFDL \u2014 FitGirl Download Accelerator & Native Bridge",
+  "version": "2.0.0",
+  "description": "1-Click High-Speed Accelerated Parallel Downloads for FitGirl Repacks with Native Messaging & Loopback RPC.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "FFDL Download Accelerator"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "activeTab",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "*://fitgirl-repacks.site/*",
+    "http://127.0.0.1:41194/*",
+    "http://127.0.0.1:45732/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://fitgirl-repacks.site/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

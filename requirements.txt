@@ -1,0 +1,6 @@
+# FF-Downloader Core Dependencies
+rich>=13.0.0
+click>=8.0.0
+httpx>=0.25.0
+aiohttp>=3.9.0
+playwright>=1.40.0

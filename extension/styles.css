@@ -1,0 +1,135 @@
+/* FFDL — FitGirl Download Accelerator UI Theme */
+
+:root {
+  --ffdl-bg-dark: #0f111a;
+  --ffdl-card-bg: rgba(20, 24, 38, 0.95);
+  --ffdl-accent-cyan: #00ffcc;
+  --ffdl-accent-blue: #0099ff;
+  --ffdl-accent-purple: #b026ff;
+  --ffdl-accent-orange: #ff9900;
+  --ffdl-accent-green: #00ff66;
+  --ffdl-border: rgba(0, 255, 204, 0.25);
+  --ffdl-text: #e6edf3;
+  --ffdl-text-muted: #8b949e;
+}
+
+/* Hide top header bar completely per user request */
+.ffdl-bar-container, #ffdl-action-bar {
+  display: none !important;
+}
+
+/* Dedicated Inline Hoster Buttons (Beside each mirror in Download Mirrors list) */
+.ffdl-inline-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  margin: 0 0 0 12px !important;
+  border-radius: 6px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid transparent !important;
+  text-decoration: none !important;
+  vertical-align: middle !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  line-height: 1.2 !important;
+}
+
+.ffdl-inline-btn:hover {
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ffdl-inline-btn:active {
+  transform: translateY(0) !important;
+}
+
+.ffdl-btn-ff {
+  background: linear-gradient(135deg, #ff0055 0%, #ff5500 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255, 0, 85, 0.4) !important;
+}
+.ffdl-btn-ff:hover {
+  box-shadow: 0 0 14px rgba(255, 85, 0, 0.6) !important;
+}
+
+.ffdl-btn-dn {
+  background: linear-gradient(135deg, #0099ff 0%, #0055ff 100%) !important;
+  color: #fff !important;
+  border-color: rgba(0, 153, 255, 0.4) !important;
+}
+.ffdl-btn-dn:hover {
+  box-shadow: 0 0 14px rgba(0, 153, 255, 0.6) !important;
+}
+
+.ffdl-btn-fk {
+  background: linear-gradient(135deg, #ff9900 0%, #cc6600 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255, 153, 0, 0.4) !important;
+}
+.ffdl-btn-fk:hover {
+  box-shadow: 0 0 14px rgba(255, 153, 0, 0.6) !important;
+}
+
+.ffdl-btn-magnet {
+  background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%) !important;
+  color: #fff !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
+}
+.ffdl-btn-magnet:hover {
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.6) !important;
+}
+
+.ffdl-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #00ffcc 0%, #0099ff 100%);
+  color: #000 !important;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  text-decoration: none !important;
+  margin: 6px 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 255, 204, 0.3);
+}
+
+.ffdl-card-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 255, 204, 0.6);
+}
+
+.ffdl-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #141826;
+  border: 1px solid var(--ffdl-accent-cyan);
+  border-radius: 10px;
+  padding: 14px 20px;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 204, 0.3);
+  z-index: 99999999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: ffdl-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ffdl-slide-in {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

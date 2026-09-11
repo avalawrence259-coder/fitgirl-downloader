@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Playwright & Browser caches
+.playwright/
+.pytest_cache/
+.hypothesis/
+
+# Local data & downloads
+downloads/
+*.zip
+
+# Scratch files & dumps
+scratch/
+test_arg*.bat
+*.html
+*.log
+
+# Internal dev audit & design specifications
+*AUDIT*.md
+*SPECIFICATION*.md
+*REPORT*.md
+*ROADMAP*.md
+LAST_SHIP*.md
+ARCHITECTURE_AND_BUILD_PLAN.md
+FREE_SCRAPER_APIS.md
+
+
